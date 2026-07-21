@@ -127,8 +127,25 @@ def _run_md(gmx_dir, label):
 
 
 # ---------------------------------------------------------------------------
-# Module fixtures
+# Persistent output dir for inspection
 # ---------------------------------------------------------------------------
+MD_OUT = TESTS_DIR / "md_output"
+
+
+def _clean_md_out():
+    """Remove previous md_output so each run is fresh."""
+    import shutil
+    if MD_OUT.exists():
+        shutil.rmtree(MD_OUT)
+    MD_OUT.mkdir()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _md_out_dir():
+    """Create fresh persistent output directory for MD runs."""
+    _clean_md_out()
+
+
 @pytest.fixture(scope="module")
 def dna_mod():
     return _load_module("martinize_dna_alpha", DNA_SCRIPT)
@@ -145,12 +162,12 @@ def rna_mod():
 class TestMDDNA:
     """Full-pipeline MD test for DNA."""
 
-    def test_full_pipeline(self, dna_mod, tmp_path):
+    def test_full_pipeline(self, dna_mod, _md_out_dir):
         label = "dna_md"
-        out_dir = tmp_path / label
-        out_dir.mkdir()
+        out_dir = MD_OUT / label
+        out_dir.mkdir(parents=True, exist_ok=True)
         gmx_dir = out_dir / "gmx"
-        gmx_dir.mkdir()
+        gmx_dir.mkdir(parents=True, exist_ok=True)
         cg_pdb = out_dir / "DNA.pdb"
         cg_itp = out_dir / "DNA.itp"
 
@@ -168,12 +185,12 @@ class TestMDDNA:
 class TestMDRNA:
     """Full-pipeline MD test for RNA."""
 
-    def test_full_pipeline(self, rna_mod, tmp_path):
+    def test_full_pipeline(self, rna_mod, _md_out_dir):
         label = "rna_md"
-        out_dir = tmp_path / label
-        out_dir.mkdir()
+        out_dir = MD_OUT / label
+        out_dir.mkdir(parents=True, exist_ok=True)
         gmx_dir = out_dir / "gmx"
-        gmx_dir.mkdir()
+        gmx_dir.mkdir(parents=True, exist_ok=True)
         cg_pdb = out_dir / "RNA.pdb"
         cg_itp = out_dir / "RNA.itp"
 
