@@ -348,3 +348,46 @@ class TestITPComparison:
         cur_keys = set(cur_sec.keys()) - {"_header"}
         assert ref_keys == cur_keys, \
             f"Section mismatch:\nref only: {ref_keys - cur_keys}\ncur only: {cur_keys - ref_keys}"
+
+    def test_line_by_line_identical(self, ref_output, cur_output):
+        """Final test: read both ITP files line by line and compare.
+
+        Only the timestamp and arguments header lines are allowed to differ
+        (they contain runtime-specific values). Everything else must match
+        exactly, including whitespace and formatting.
+        """
+        _, ref_itp = ref_output
+        _, cur_itp = cur_output
+
+        with open(ref_itp) as rf, open(cur_itp) as cf:
+            ref_lines = rf.readlines()
+            cur_lines = cf.readlines()
+
+        assert len(ref_lines) == len(cur_lines), (
+            f"Line count mismatch: ref={len(ref_lines)} cur={len(cur_lines)}"
+        )
+
+        mismatches = []
+        for i, (rl, cl) in enumerate(zip(ref_lines, cur_lines), start=1):
+            if rl == cl:
+                continue
+
+            # Allow differences in timestamp/arguments header lines
+            rls = rl.strip()
+            cls = cl.strip()
+            if rls.startswith("; Generated on:") and cls.startswith("; Generated on:"):
+                continue
+            if rls.startswith("; input_pdb=") and cls.startswith("; input_pdb="):
+                continue
+
+            mismatches.append((i, rl.rstrip("\n"), cl.rstrip("\n")))
+
+        if mismatches:
+            msg_parts = [f"{len(mismatches)} line(s) differ:"]
+            for lineno, ref_line, cur_line in mismatches[:20]:
+                msg_parts.append(f"  Line {lineno}:")
+                msg_parts.append(f"    ref: {ref_line}")
+                msg_parts.append(f"    cur: {cur_line}")
+            if len(mismatches) > 20:
+                msg_parts.append(f"  ... and {len(mismatches) - 20} more")
+            pytest.fail("\n".join(msg_parts))
