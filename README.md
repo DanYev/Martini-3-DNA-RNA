@@ -1,38 +1,54 @@
-## Martinize RNA/DNA Scripts
+# Martini 3 DNA/RNA Coarse-Graining Tools
 
-A standalone script that converts all-atom RNA structures to coarse-grained representations using the Martini 3 force field.
+Standalone scripts to convert all-atom DNA and RNA structures to coarse-grained
+Martini 3 representations (`.itp` topology + `.pdb` structure) for GROMACS.
 
-### Usage
-1. Download the script and required `.itp` files from the `scripts/` directory
-2. View available options:
+> **Note:** The DNA force field is in **alpha** — a publication is being prepared.
+> The RNA force field is published; see citation below.
+
+## Quick Start
+
 ```bash
+# DNA
+python martinize_dna_alpha.py -f input.pdb -os cg.pdb -ot cg.itp
+
+# RNA
+python martinize_rna_v3.0.0.py -f input.pdb -os cg.pdb -ot cg.itp
+```
+
+View all options:
+```bash
+python martinize_dna_alpha.py --help
 python martinize_rna_v3.0.0.py --help
 ```
 
-### Force Field Files
+## Python API
 
-The script automatically loads bonded/unbonded parameters from:
+```python
+from martinize_dna_alpha import martinize_dna
+from martinize_rna_v3_0_0 import martinize_rna
+
+# DNA
+pdb, itp = martinize_dna("input.pdb", output_structure="cg.pdb", output_topology="cg.itp")
+
+# RNA
+pdb, itp = martinize_rna("input.pdb", output_structure="cg.pdb", output_topology="cg.itp")
 ```
-/path/to/the/script/martinize_rna_v3.0.0_itps/
-```
-```
 
-### Citation
+## Dependencies
 
-If you use this script in your research, please cite:
+- Python ≥ 3.9
+- NumPy
 
-> Yangaliev D, Ozkan SB. Coarse-grained RNA model for the Martini 3 force field. *Biophys J*. 2025 Aug 5:S0006-3495(25)00483-7. doi: [10.1016/j.bpj.2025.07.034](https://doi.org/10.1016/j.bpj.2025.07.034)
+## Citation
 
-
-### DNA Script
-
-The current version works (to out knowdledge) but is still in development. 
-Feel free to contact us or report any issues.
-
-### License
-
-Copyright (c) 2025, DY
-Licensed under the GNU General Public License v3.0
+> Yangaliev D, Ozkan SB. Coarse-grained DNA model for the Martini 3 force field.
+> *Biophys J*. 2025 Aug 5:S0006-3495(25)00483-7.
+> doi: [10.1016/j.bpj.2025.07.034](https://doi.org/10.1016/j.bpj.2025.07.034)
 
 [![DOI](https://zenodo.org/badge/944535799.svg)](https://doi.org/10.5281/zenodo.19207978)
+
+## License
+
+GNU General Public License v3.0
 
