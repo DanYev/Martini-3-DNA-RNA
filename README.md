@@ -4,7 +4,7 @@ Standalone scripts to convert all-atom DNA and RNA structures to coarse-grained
 Martini 3 representations (`.itp` topology + `.pdb` structure) for GROMACS.
 
 > **Note:** The DNA force field is in **alpha** — a publication is being prepared.
-> The RNA force field is published; see citation below.
+> It's based on the RNA version with updated backbone parameters to match B-DNA and sidechain parameters for thymine.
 
 ## Quick Start
 
