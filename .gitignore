@@ -1,10 +1,4 @@
-ligands/
-output/
-png/
-protein_systems/
-analysis/
 slurm*
-SMartini/
 systems*/
 tmp/
 *.log
@@ -15,7 +9,7 @@ tmp/
 *.pdf
 *.pkl
 *.gro
-aa*.png
+*.png
 
 # ---- Python ----
 __pycache__/
