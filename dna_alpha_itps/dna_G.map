@@ -15,9 +15,9 @@ SC5  C6 O6
 SC6  C5 N7
 
 [ atomtypes ]
-SC1  TG0  0  50
-SC2  TG1  0  0
-SC3  TG2  0  50
-SC4  TG3  0  0
-SC5  TG4  0  50
-SC6  TG5  0  0
+SC1  TDG0  0  50
+SC2  TDG1  0  0
+SC3  TDG2  0  50
+SC4  TDG3  0  0
+SC5  TDG4  0  50
+SC6  TDG5  0  0

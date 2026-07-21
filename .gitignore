@@ -1,6 +1,7 @@
 slurm*
 systems*/
 tmp/
+md_output/
 *.log
 *.tmp
 *.txt

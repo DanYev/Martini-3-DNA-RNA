@@ -558,9 +558,9 @@ class NucleicForceField:
         if itp_dir is not None:
             itp_path = Path(itp_dir)
         else:
-            itp_path = script_dir / f"martinize_{mol}_{version}_itps"
+            itp_path = script_dir / f"{mol}_alpha_itps"
         
-        file_path = itp_path / f"{mol}_{resname}_{version}.itp"
+        file_path = itp_path / f"{mol}_{resname}.itp"
         
         if file_path.exists():
             logger.debug(f"Reading ITP file: {file_path}")
@@ -620,7 +620,7 @@ class NucleicForceField:
         if itp_dir is not None:
             self.itp_dir = Path(itp_dir)
         else:
-            self.itp_dir = script_dir / f"martinize_{mol}_{version}_itps"
+            self.itp_dir = script_dir / f"{mol}_alpha_itps"
         
         logger.info(f"Loading ITP files from {self.itp_dir}")
         
@@ -742,7 +742,7 @@ class Martini30DNA(NucleicForceField):
         self.name = "martini30dna"
 
         script_dir = Path(__file__).parent
-        map_dir = script_dir / f"martinize_{mol}_{version}_itps"
+        map_dir = script_dir / f"{mol}_alpha_itps"
 
         # --- backbone mapping + atoms from map file ---
         bb_path = map_dir / "dna_bb.map"
@@ -792,9 +792,9 @@ class Martini30DNA(NucleicForceField):
         if itp_dir is not None:
             itp_path = Path(itp_dir)
         else:
-            itp_path = script_dir / f"martinize_{mol}_{version}_itps"
+            itp_path = script_dir / f"{mol}_alpha_itps"
 
-        bb_file = itp_path / f"dna_bb_{version}.itp"
+        bb_file = itp_path / "dna_bb.itp"
         logger.info("Reading backbone parameters from %s", bb_file)
 
         bb_itp = read_itp(str(bb_file))
