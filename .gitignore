@@ -1,0 +1,86 @@
+ligands/
+output/
+png/
+protein_systems/
+analysis/
+slurm*
+SMartini/
+systems*/
+tmp/
+*.log
+*.tmp
+*.txt
+*.npy
+*.npz
+*.pdf
+*.pkl
+*.gro
+aa*.png
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+activate_env.sh
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Unit test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+nosetests.xml
+
+# Type checkers / linters
+.mypy_cache/
+.ruff_cache/
+.pytype/
+.tox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# ---- Cython / compiled extensions ----
+*.pyd
+*.dll
+*.dylib
+*.so
+
+
+# Cython build artifacts
+*.c
+*.cpp
+*.html
+*.nfs*
+
+# ---- HPC / cluster outputs ----
+slurm*.out
+slurm*.err
+delete_junk.sh
+
+# ---- Data / outputs (project-specific) ----
+# keep top-level entries above; add common scratch patterns
+**/output/
+**/systems/
+**/aa_md*/
+**/cg_md*/
