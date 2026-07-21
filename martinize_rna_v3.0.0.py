@@ -1059,7 +1059,7 @@ def martinize_rna(input_pdb, output_topology='molecule.itp', output_structure='m
                             force_field='reg', molecule_name='molecule', merge_chains='yes',
                             elastic_network='yes', elastic_force=200, elastic_lower=0.3, 
                             elastic_upper=1.2, position_restraints='backbone', 
-                            restraint_force=1000, debug=False):
+                            restraint_force=1000, debug=False, itp_dir=None):
     """
     Martinize RNA function that can be imported and used programmatically.
     
@@ -1094,6 +1094,8 @@ def martinize_rna(input_pdb, output_topology='molecule.itp', output_structure='m
         Position restraint force constant in kJ/mol/nm² (default: 1000)
     debug : bool, optional
         Enable debug logging (default: False)
+    itp_dir : str, optional
+        Custom directory containing ITP/map files. If None, uses default.
         
     Returns:
     --------
@@ -1113,7 +1115,7 @@ def martinize_rna(input_pdb, output_topology='molecule.itp', output_structure='m
     
     if force_field == "reg":
         logger.info("Initializing Martini 3.0 RNA force field")
-        ff = Martini30RNA()
+        ff = Martini30RNA(itp_dir=itp_dir)
     else:
         raise ValueError(f"Unsupported force field option: {force_field}")
     
