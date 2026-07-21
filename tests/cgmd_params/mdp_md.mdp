@@ -1,0 +1,46 @@
+integrator                  = md
+dt                          = 0.010
+nsteps                      = 1000000 ; 1000000 for 10000 ps = 10 ns  
+nstxout                     = 0
+nstvout                     = 0
+nstfout                     = 0
+nstxout-compressed          = 1000 ; 1000 -> 100 samples for 100000 ; every 10 ps for fitting
+compressed-x-precision      = 1000
+nstlog                      = 100000
+nstenergy                   = 100000
+
+nstcomm                     = 100
+comm-grps                   = System
+
+cutoff-scheme               = Verlet
+nstlist                     = 20
+pbc                         = xyz
+verlet-buffer-tolerance     = 0.005
+
+coulombtype                 = reaction-field 
+rcoulomb                    = 1.1
+epsilon_r                   = 15    ; 2.5 (with polarizable water)
+epsilon_rf                  = 0
+vdw_type                    = cutoff  
+vdw-modifier                = Potential-shift-verlet
+rvdw                        = 1.1
+
+tcoupl                      = v-rescale 
+tc-grps                     = System
+tau-t                       = 1.0 
+ref-t                       = 300 
+
+Pcoupl                      = c-rescale
+Pcoupltype                  = isotropic
+tau-p                       = 4.0
+compressibility             = 3.0e-4 
+ref-p                       = 1.0 
+refcoord-scaling            = all
+
+gen_vel                     = yes
+gen_temp                    = 300
+
+lincs-warnangle             = 30
+lincs-order                 = 6
+lincs-iter                  = 2
+constraints                 = none ; all-bonds
