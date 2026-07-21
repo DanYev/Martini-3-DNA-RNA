@@ -11,7 +11,7 @@ SC3  N3
 SC4  N4 C4 H41 H42
 
 [ atomtypes ]
-SC1  TY0  0  37
-SC2  TY1  0  37
-SC3  TY2  0  0
-SC4  TY3  0  37
+SC1  TDY0  0  37
+SC2  TDY1  0  37
+SC3  TDY2  0  0
+SC4  TDY3  0  37

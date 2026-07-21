@@ -13,8 +13,8 @@ SC4  N6 C6 H61 H62
 SC5  N7 C5
 
 [ atomtypes ]
-SC1  TA0  0  45
-SC2  TA1  0  0
-SC3  TA2  0  45
-SC4  TA3  0  45
-SC5  TA4  0  0
+SC1  TDA0  0  45
+SC2  TDA1  0  0
+SC3  TDA2  0  45
+SC4  TDA3  0  45
+SC5  TDA4  0  0
