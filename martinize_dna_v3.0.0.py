@@ -1330,9 +1330,9 @@ Please cite:
     )
     parser.add_argument(
         "-el",
-        default=0.3,
+        default=0.5,
         type=float,
-        help="Elastic network lower cutoff (default: 0.3 nm)",
+        help="Elastic network lower cutoff (default: 0.5 nm)",
     )
     parser.add_argument(
         "-eu",

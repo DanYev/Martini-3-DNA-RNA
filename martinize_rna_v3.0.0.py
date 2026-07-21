@@ -532,14 +532,25 @@ class NucleicForceField:
     """Base class for nucleic acid force fields."""
     
     @staticmethod
-    def read_itp_file(resname, directory, mol, version):
-        """Read an ITP file for a given residue."""
+    def read_itp_file(resname, directory, mol, version, itp_dir=None):
+        """Read an ITP file for a given residue.
+        
+        Parameters:
+        -----------
+        itp_dir : str or Path, optional
+            Custom directory containing ITP files. If None, uses the default
+            martinize_{mol}_{version}_itps/ relative to the script directory.
+        """
         # Get the script directory
         script_dir = Path(__file__).parent
         
-        # Look for ITP files in script_dir/martinize_{molecule}_{version}_itps/
-        itp_dir = script_dir / f"martinize_{mol}_{version}_itps"
-        file_path = itp_dir / f"{mol}_{resname}_{version}.itp"
+        # Use custom ITP directory if provided, otherwise use default
+        if itp_dir is not None:
+            itp_path = Path(itp_dir)
+        else:
+            itp_path = script_dir / f"martinize_{mol}_{version}_itps"
+        
+        file_path = itp_path / f"{mol}_{resname}_{version}.itp"
         
         if file_path.exists():
             logger.debug(f"Reading ITP file: {file_path}")
@@ -569,64 +580,86 @@ class NucleicForceField:
         return sc_bonds, sc_angles, sc_dihs, sc_cons, sc_excls, sc_pairs, sc_vs3s
 
     @staticmethod
-    def parameters_by_resname(resnames, directory, mol, version):
+    def parameters_by_resname(resnames, directory, mol, version, itp_dir=None):
         """Obtain parameters for each residue."""
         logger.info(f"Loading sidechain parameters for residues: {resnames}")
         params = []
         for resname in resnames:
             logger.debug(f"Loading parameters for residue {resname}")
-            itp_data = NucleicForceField.read_itp_file(resname, directory, mol, version)
+            itp_data = NucleicForceField.read_itp_file(resname, directory, mol, version, itp_dir)
             param = NucleicForceField.itp_to_indata(itp_data)
             params.append(param)
             logger.debug(f"Loaded {len(param[0])} bonds, {len(param[1])} angles, {len(param[2])} dihedrals for {resname}")
         return dict(zip(resnames, params))
 
-    def __init__(self, directory, mol, version):
-        """Initialize the nucleic force field."""
+    def __init__(self, directory, mol, version, itp_dir=None):
+        """Initialize the nucleic force field.
+        
+        Parameters:
+        -----------
+        itp_dir : str or Path, optional
+            Custom directory containing ITP files. If None, uses the default
+            martinize_{mol}_{version}_itps/ relative to the script directory.
+        """
         self.directory = directory
         self.mol = mol
         self.version = version
         
-        # Show the actual ITP directory path
+        # Determine the actual ITP directory
         script_dir = Path(__file__).parent
-        itp_dir = script_dir / f"martinize_{mol}_{version}_itps"
-        logger.info(f"Loading ITP files from {itp_dir}")
+        if itp_dir is not None:
+            self.itp_dir = Path(itp_dir)
+        else:
+            self.itp_dir = script_dir / f"martinize_{mol}_{version}_itps"
         
-        self.resdict = self.parameters_by_resname(self.resnames, directory, mol, version)
+        logger.info(f"Loading ITP files from {self.itp_dir}")
+        
+        self.resdict = self.parameters_by_resname(self.resnames, directory, mol, version, self.itp_dir)
         self.elastic_network = False
         self.el_bond_type = 6
 
+    def _normalize_resname(self, resname):
+        """Normalize terminal residue names: RA5/RA3 -> A, RC5/RC3 -> C, etc."""
+        if resname in self.resdict:
+            return resname
+        # Strip R/D prefix and 3/5 suffix for terminal residues
+        base = resname.lstrip("RD").rstrip("35")
+        if base in self.resdict:
+            return base
+        return resname
+
     def sc_bonds(self, resname):
-        return self.resdict[resname][0]
+        return self.resdict[self._normalize_resname(resname)][0]
 
     def sc_angles(self, resname):
-        return self.resdict[resname][1]
+        return self.resdict[self._normalize_resname(resname)][1]
 
     def sc_dihs(self, resname):
-        return self.resdict[resname][2]
+        return self.resdict[self._normalize_resname(resname)][2]
 
     def sc_cons(self, resname):
-        return self.resdict[resname][3]
+        return self.resdict[self._normalize_resname(resname)][3]
 
     def sc_excls(self, resname):
-        return self.resdict[resname][4]
+        return self.resdict[self._normalize_resname(resname)][4]
 
     def sc_pairs(self, resname):
-        return self.resdict[resname][5]
+        return self.resdict[self._normalize_resname(resname)][5]
 
     def sc_vs3s(self, resname):
-        return self.resdict[resname][6]
+        return self.resdict[self._normalize_resname(resname)][6]
 
     def sc_blist(self, resname):
         """Get all bonded parameters for a residue."""
+        rn = self._normalize_resname(resname)
         return [
-            self.sc_bonds(resname),
-            self.sc_angles(resname),
-            self.sc_dihs(resname),
-            self.sc_cons(resname),
-            self.sc_excls(resname),
-            self.sc_pairs(resname),
-            self.sc_vs3s(resname),
+            self.resdict[rn][0],
+            self.resdict[rn][1],
+            self.resdict[rn][2],
+            self.resdict[rn][3],
+            self.resdict[rn][4],
+            self.resdict[rn][5],
+            self.resdict[rn][6],
         ]
 
     @staticmethod
@@ -647,134 +680,139 @@ class NucleicForceField:
 
 class Martini30RNA(NucleicForceField):
     """Force field for Martini 3.0 RNA."""
-    
+
     resnames = ["A", "C", "G", "U"]
     alt_resnames = ["ADE", "CYT", "GUA", "URA"]
 
-    bb_mapping = {
-        "BB1": ("P", "OP1", "OP2", "O5'", "O3'", "O1P", "O2P"),
-        "BB2": ("C5'", "1H5'", "2H5'", "H5'", "H5''", "C4'", "H4'", "O4'", "C3'", "H3'"),
-        "BB3": ("C1'", "C2'", "O2'", "O4'"),
-    }
-    a_mapping = {
-        "SC1": ("N9", "C8", "H8"),
-        "SC2": ("N3", "C4"),
-        "SC3": ("N1", "C2", "H2"),
-        "SC4": ("N6", "C6", "H61", "H62"),
-        "SC5": ("N7", "C5"),
-    }
-    c_mapping = {
-        "SC1": ("N1", "C5", "C6"),
-        "SC2": ("C2", "O2"),
-        "SC3": ("N3",),
-        "SC4": ("N4", "C4", "H41", "H42"),
-    }
-    g_mapping = {
-        "SC1": ("C8", "H8", "N9"),
-        "SC2": ("C4", "N3"),
-        "SC3": ("C2", "N2", "H21", "H22",),
-        "SC4": ("N1",),
-        "SC5": ("C6", "O6"),
-        "SC6": ("C5", "N7"),
-    }
-    u_mapping = {
-        "SC1": ("N1", "C5", "C6"),
-        "SC2": ("C2", "O2"),
-        "SC3": ("N3",),
-        "SC4": ("C4", "O4"),
-    }
-    
-    mapping = {
-        "A": {**bb_mapping, **a_mapping},
-        "ADE": {**bb_mapping, **a_mapping},       
-        "C": {**bb_mapping, **c_mapping},
-        "CYT": {**bb_mapping, **c_mapping},
-        "G": {**bb_mapping, **g_mapping},
-        "GUA": {**bb_mapping, **g_mapping},
-        "U": {**bb_mapping, **u_mapping},
-        "URA": {**bb_mapping, **u_mapping},
-    }
+    # ------------------------------------------------------------------
+    # AA-to-CG mapping loaded from .map files at init time
+    # ------------------------------------------------------------------
 
-    def __init__(self, directory="rna_reg", mol="rna", version="v3.0.0"):
-        super().__init__(directory, mol, version)
+    @staticmethod
+    def _read_map_file(map_path, bb_offset=0):
+        """Parse a .map file.
+
+        Returns ``(mapping_dict, atoms_list)`` where *atoms_list* entries are
+        ``(bead_idx, type, bead_name, cgnr, charge, mass)``.
+        *bb_offset* is added to bead indices (0 for backbone, 3 for sidechain).
+        """
+        mapping = {}
+        atoms = []
+        current = None
+        with open(map_path) as f:
+            for line in f:
+                s = line.strip()
+                if not s or s.startswith(";") or s.startswith("#"):
+                    continue
+                if s.startswith("[") and s.endswith("]"):
+                    current = s[1:-1].strip()
+                    continue
+                parts = s.split()
+                if not parts:
+                    continue
+                if current == "mapping":
+                    mapping[parts[0]] = tuple(parts[1:])
+                elif current == "atomtypes":
+                    if len(parts) >= 4:
+                        # CG_BEAD  TYPE  CHARGE  MASS
+                        bead_name = parts[0]
+                        atype = parts[1]
+                        charge = float(parts[2])
+                        mass = float(parts[3])
+                        bead_idx = bb_offset + len(atoms)
+                        cgnr = 1 if bb_offset == 0 else 2  # BB=1, SC=2
+                        atoms.append((bead_idx, atype, bead_name, cgnr, charge, mass))
+        return mapping, atoms
+
+    def __init__(self, directory="rna_reg", mol="rna", version="v3.0.0", itp_dir=None):
+        super().__init__(directory, mol, version, itp_dir)
         self.name = "martini30rna"
 
-        # RNA backbone atoms: tuple of (atom id, type, name, charge group, charge, mass)
-        self.bb_atoms = [
-            (0, "Q1n", "BB1", 1, -1, 72),
-            (1, "N1", "BB2", 1, 0, 60),
-            (2, "N3", "BB3", 1, 0, 60),
-        ]
-        
-        self.bb_bonds = [
-            [(0, 1), (1, 0.351, 18000), ("BB1-BB2")],
-            [(1, 2), (1, 0.238, 18000), ("BB2-BB3")],
-            [(1, 0), (1, 0.375, 12000), ("BB2-BB1n")],
-            [(2, 0), (1, 0.414, 12000), ("BB3-BB1n")],
-        ]
-        
-        self.bb_angles = [
-            [(0, 1, 0), (10, 106.0,  50), ("BB1-BB2-BB1n")],
-            [(1, 0, 1), (10, 123.0, 150), ("BB2-BB1n-BB2n")],
-            [(0, 1, 2), (10, 142.0, 300), ("BB1-BB2-BB3")],
-        ]
-        
-        self.bb_dihs = [
-            [(0, 1, 0, 1), (3, 13, -7, -25, -6, 25, 2), ("BB1-BB2-BB1n-BB2n")],
-            [(-2, 0, 1, 0), (1, 0.0, 7.0, 1), ("BB2p-BB1-BB2-BB1n")],
-            [(-2, 0, 1, 2), (1, -105.0, 10.0, 1), ("BB2p-BB1-BB2-BB3")],
-        ]
-        
-        self.bb_cons = []
-        self.bb_excls = [[(0, 2), (), ("BB1-BB3")], [(2, 0), (), ("BB3-BB1n")]]
-        self.bb_pairs = []
-        self.bb_vs3s = []
-        self.bb_blist = [
-            self.bb_bonds,
-            self.bb_angles,
-            self.bb_dihs,
-            self.bb_cons,
-            self.bb_excls,
-            self.bb_pairs,
-            self.bb_vs3s,
-        ]
+        script_dir = Path(__file__).parent
+        map_dir = script_dir / f"martinize_{mol}_{version}_itps"
 
-        # Side-chain atom definitions for each base
-        a_atoms = [
-            (3, "TA0", "SC1", 2, 0, 45),
-            (4, "TA1", "SC2", 2, 0, 0),
-            (5, "TA2", "SC3", 2, 0, 45),
-            (6, "TA3", "SC4", 2, 0, 45),
-            (7, "TA4", "SC5", 2, 0, 0),
-        ]
-        c_atoms = [
-            (3, "TY0", "SC1", 2, 0, 37),
-            (4, "TY1", "SC2", 2, 0, 37),
-            (5, "TY2", "SC3", 2, 0, 0),
-            (6, "TY3", "SC4", 2, 0, 37),
-        ]
-        g_atoms = [
-            (3, "TG0", "SC1", 2, 0, 50),
-            (4, "TG1", "SC2", 2, 0, 0),
-            (5, "TG2", "SC3", 2, 0, 50),
-            (6, "TG3", "SC4", 2, 0, 0),
-            (7, "TG4", "SC5", 2, 0, 50),
-            (8, "TG5", "SC6", 2, 0, 0),
-        ]
-        u_atoms = [
-            (3, "TU0", "SC1", 2, 0, 37),
-            (4, "TU1", "SC2", 2, 0, 37),
-            (5, "TU2", "SC3", 2, 0, 0),
-            (6, "TU3", "SC4", 2, 0, 37),
-        ]
-        sc_atoms = (a_atoms, c_atoms, g_atoms, u_atoms)
+        # --- backbone mapping + atoms from map file ---
+        bb_path = map_dir / "rna_bb.map"
+        self.bb_mapping, self.bb_atoms = self._read_map_file(bb_path, bb_offset=0)
+
+        # --- sidechain mappings ---
+        for base in self.resnames:
+            sc_path = map_dir / f"rna_{base}.map"
+            sc_map, sc_at = self._read_map_file(sc_path, bb_offset=3)
+            setattr(self, f"{base.lower()}_mapping", sc_map)
+            setattr(self, f"{base.lower()}_atoms", sc_at)
+
+        # Composite mapping dict
+        self.mapping = {}
+        for base in self.resnames:
+            sc_map = getattr(self, f"{base.lower()}_mapping")
+            self.mapping[base] = {**self.bb_mapping, **sc_map}
+            for alt in self.alt_resnames:
+                if alt.startswith(base):
+                    self.mapping[alt] = {**self.bb_mapping, **sc_map}
+
+        # Read backbone bonded parameters from ITP
+        bb_blist = self.read_bb_itp(mol=mol, version=version, itp_dir=itp_dir)
+        self.bb_bonds = bb_blist[0]
+        self.bb_angles = bb_blist[1]
+        self.bb_dihs = bb_blist[2]
+        self.bb_cons = bb_blist[3]
+        self.bb_excls = bb_blist[4]
+        self.bb_pairs = bb_blist[5]
+        self.bb_vs3s = bb_blist[6]
+        self.bb_blist = bb_blist
+
+        # Sidechain atom definitions per base
+        sc_atoms = tuple(getattr(self, f"{b.lower()}_atoms") for b in self.resnames)
         self.mapdict = dict(zip(self.resnames, sc_atoms))
 
         NucleicForceField.update_non_standard_mapping(self.mapping)
 
+    @staticmethod
+    def read_bb_itp(mol="rna", version="v3.0.0", itp_dir=None):
+        """Read backbone bonded parameters from rna_bb ITP file.
+
+        Atom types come from ``rna_bb.map``; this only reads bonded terms.
+        ITP indices are 0-based.
+        """
+        script_dir = Path(__file__).parent
+        if itp_dir is not None:
+            itp_path = Path(itp_dir)
+        else:
+            itp_path = script_dir / f"martinize_{mol}_{version}_itps"
+
+        bb_file = itp_path / f"rna_bb_{version}.itp"
+        logger.info("Reading backbone parameters from %s", bb_file)
+
+        bb_itp = read_itp(str(bb_file))
+
+        bb_bonds = []
+        for conn, params, comment in bb_itp.get("bonds", []):
+            bb_bonds.append([list(conn), list(params), comment if isinstance(comment, str) else ""])
+
+        bb_angles = []
+        for conn, params, comment in bb_itp.get("angles", []):
+            bb_angles.append([list(conn), list(params), comment if isinstance(comment, str) else ""])
+
+        bb_dihs = []
+        for conn, params, comment in bb_itp.get("dihedrals", []):
+            bb_dihs.append([list(conn), list(params), comment if isinstance(comment, str) else ""])
+
+        bb_cons = []
+        for conn, params, comment in bb_itp.get("constraints", []):
+            bb_cons.append([list(conn), list(params), comment if isinstance(comment, str) else ""])
+
+        bb_excls = []
+        for conn, params, comment in bb_itp.get("exclusions", []):
+            bb_excls.append([list(conn), list(params) if params else (), comment if isinstance(comment, str) else ""])
+
+        bb_blist = [bb_bonds, bb_angles, bb_dihs, bb_cons, bb_excls, [], []]
+
+        return bb_blist
+
     def sc_atoms(self, resname):
         """Return side-chain atoms for the given residue."""
-        return self.mapdict[resname]
+        return self.mapdict.get(self._normalize_resname(resname), [])
 
 
 ###################################
