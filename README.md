@@ -48,6 +48,11 @@ pdb, itp = martinize_rna("input.pdb", output_structure="cg.pdb", output_topology
 
 [![DOI](https://zenodo.org/badge/944535799.svg)](https://doi.org/10.5281/zenodo.19207978)
 
+## Other Martini 3 related work
+
+Automated Ligand Parametrization:
+ - https://github.com/DanYev/SMartini
+
 ## License
 
 GNU General Public License v3.0
